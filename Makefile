@@ -106,7 +106,7 @@
 
 # .PHONY: all clean fclean re download
 
-NAME = game
+NAME = cub3D
 CC = cc
 CFLAGS = -Wall -Wextra -Werror
 MLX_DIR = ./includes/minilibx-linux
@@ -115,7 +115,8 @@ LFLAGS = -L$(MLX_DIR) -lmlx -lXext -lX11 -lm -lz
 LIBFT_DIR = ./includes/libft
 LIBFT = $(LIBFT_DIR)/libft.a
 LIBFT_FLAGS = -L$(LIBFT_DIR) -lft
-SRC = src/main.c src/player.c
+SRC =	src/main.c \
+		src/player.c
 OBJ_DIR = obj
 OBJ = $(SRC:src/%.c=$(OBJ_DIR)/%.o)
 

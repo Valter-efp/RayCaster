@@ -24,32 +24,40 @@
 
 typedef struct s_player
 {
-    float x;
-    float y;
-    float angle;
+	float x;
+	float y;
+	float angle;
 
-    bool key_up;
-    bool key_down;
-    bool key_left;
-    bool key_right;
+	bool key_up;
+	bool key_down;
+	bool key_left;
+	bool key_right;
 
-    bool left_rotate;
-    bool right_rotate;
+	bool left_rotate;
+	bool right_rotate;
 }   t_player;
 
 typedef struct s_game
 {
-    void *mlx;
-    void *win;
-    void *img;
+	void		*mlx;
+	void		*win;
+	void		*img;
 
-    char *data;
-    int bpp;
-    int size_line;
-    int endian;
-    t_player player;
+	char		*data;
+	int			bpp;
+	int			size_line;
+	int 		endian;
+	t_player	player;
 
-    char **map;
+	void		*texture_img;
+	char		*texture_data;
+	int			texture_width;
+	int			texture_height;
+	int			texture_bpp;
+	int			texture_size_line;
+	int			texture_endian;
+	
+	char		**map;
 } t_game;
 
 void init_player(t_player *player);

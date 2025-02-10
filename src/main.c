@@ -17,6 +17,22 @@ void	put_pixel(int x, int y, int color, t_game *game)
 	game->data[index + 2] = (color >> 16) & 0xFF;
 }
 
+void	put_texture_pixel(int x, int y, int tex_x, int tex_y, t_game *game)
+{
+	int	color;
+	int	tex_index;
+	int	index;
+
+	if (x >= WIDTH || y >= HEIGHT || x < 0 || y < 0)
+		return ;
+	tex_index = tex_y * game->texture_size_line + tex_x * game->texture_bpp / 8;
+	color = *(int *)(game->texture_data + tex_index);
+	index = y * game->size_line + x * game->bpp / 8;
+	game->data[index] = color & 0xFF;
+	game->data[index + 1] = (color >> 8) & 0xFF;
+	game->data[index + 2] = (color >> 16) & 0xFF;
+}
+
 /// @brief Clears the game's image by setting all pixels to black.
 /// @param game A pointer to the game structure containing the image data. 
 void	clear_image(t_game *game)
@@ -173,9 +189,13 @@ void	init_game(t_game *game)
 	init_player(&game->player);
 	game->map = get_map();
 	game->mlx = mlx_init();
-	game->win = mlx_new_window(game->mlx, WIDTH, HEIGHT, "Game");
+	game->win = mlx_new_window(game->mlx, WIDTH, HEIGHT, "cub3D");
 	game->img = mlx_new_image(game->mlx, WIDTH, HEIGHT);
 	game->data = mlx_get_data_addr(game->img, &game->bpp, &game->size_line, &game->endian);
+
+	game->texture_img = mlx_xpm_file_to_image(game->mlx, "./textures/redbrick.xpm", &game->texture_width, &game->texture_height);
+	game->texture_data = mlx_get_data_addr(game->texture_img, &game->texture_bpp, &game->texture_size_line, &game->texture_endian);
+
 	mlx_put_image_to_window(game->mlx, game->win, game->img, 0, 0);
 }
 
@@ -184,40 +204,91 @@ void	init_game(t_game *game)
 /// @param game A pointer to the game structure containing the map and image data.
 /// @param start_x The starting x-coordinate of the ray.
 /// @param i The index of the current ray being drawn.
+// void	draw_line(t_player *player, t_game *game, float start_x, int i)
+// {
+// 	float	cos_angle;
+// 	float	sin_angle;
+// 	float	ray_x;
+// 	float	ray_y;
+// 	float	dist;
+// 	float	height;
+// 	int		start_y;
+// 	int		end;
+
+// 	cos_angle = cos(start_x);
+// 	sin_angle = sin(start_x);
+// 	ray_x = player->x;
+// 	ray_y = player->y;
+// 	while (!touch(ray_x, ray_y, game))
+// 	{
+// 		if (DEBUG)
+// 			put_pixel(ray_x, ray_y, 0xFF0000, game);
+// 		ray_x += cos_angle;
+// 		ray_y += sin_angle;
+// 	}
+// 	if (!DEBUG)
+// 	{
+// 		dist = fixed_dist(player->x, player->y, ray_x, ray_y, game);
+// 		height = (BLOCK / dist) * (WIDTH / 2);
+// 		start_y = (HEIGHT - height) / 2;
+// 		end = start_y + height;
+// 		while (start_y < end)
+// 		{
+// 			put_pixel(i, start_y, 255, game);
+// 			start_y++;
+// 		}
+// 	}
+// }
+
 void	draw_line(t_player *player, t_game *game, float start_x, int i)
 {
-	float	cos_angle;
-	float	sin_angle;
-	float	ray_x;
-	float	ray_y;
-	float	dist;
-	float	height;
-	int		start_y;
-	int		end;
+    float	cos_angle;
+    float	sin_angle;
+    float	ray_x;
+    float	ray_y;
+    float	dist;
+    float	height;
+    int		start_y;
+    int		end;
+    int		tex_x;
+    int		tex_y;
+    float	step;
+    float	tex_pos;
 
-	cos_angle = cos(start_x);
-	sin_angle = sin(start_x);
-	ray_x = player->x;
-	ray_y = player->y;
-	while (!touch(ray_x, ray_y, game))
-	{
-		if (DEBUG)
-			put_pixel(ray_x, ray_y, 0xFF0000, game);
-		ray_x += cos_angle;
-		ray_y += sin_angle;
-	}
-	if (!DEBUG)
-	{
-		dist = fixed_dist(player->x, player->y, ray_x, ray_y, game);
-		height = (BLOCK / dist) * (WIDTH / 2);
-		start_y = (HEIGHT - height) / 2;
-		end = start_y + height;
-		while (start_y < end)
-		{
-			put_pixel(i, start_y, 255, game);
-			start_y++;
-		}
-	}
+    cos_angle = cos(start_x);
+    sin_angle = sin(start_x);
+    ray_x = player->x;
+    ray_y = player->y;
+    while (!touch(ray_x, ray_y, game))
+    {
+        if (DEBUG)
+            put_pixel(ray_x, ray_y, 0xFF0000, game);
+        ray_x += cos_angle;
+        ray_y += sin_angle;
+    }
+    if (!DEBUG)
+    {
+        dist = fixed_dist(player->x, player->y, ray_x, ray_y, game);
+        height = (BLOCK / dist) * (WIDTH / 2);
+        start_y = (HEIGHT - height) / 2;
+        end = start_y + height;
+
+        // Calculate tex_x based on the intersection point
+        if (fabs(ray_x - floor(ray_x)) < fabs(ray_y - floor(ray_y)))
+            tex_x = (int)(ray_x * game->texture_width) % game->texture_width;
+        else
+            tex_x = (int)(ray_y * game->texture_width) % game->texture_width;
+
+        step = 1.0 * game->texture_height / height;
+        tex_pos = (start_y - HEIGHT / 2 + height / 2) * step;
+        while (start_y < end)
+        {
+            tex_y = (int)tex_pos & (game->texture_height - 1);
+            tex_pos += step;
+            put_texture_pixel(i, start_y, tex_x, tex_y, game);
+            start_y++;
+        }
+    }
 }
 
 /// @brief Main drawing loop that updates the game state and renders the scene.
