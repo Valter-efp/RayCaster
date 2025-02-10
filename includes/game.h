@@ -4,7 +4,7 @@
 # define WIDTH 1280
 # define HEIGHT 720
 # define BLOCK 64
-# define DEBUG 1
+# define DEBUG 0
 
 # define W 119
 # define A 97
@@ -16,6 +16,7 @@
 # define PI 3.14159265359
 
 #include "minilibx-linux/mlx.h"
+#include "libft/libft.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
